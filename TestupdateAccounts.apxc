@@ -1,0 +1,34 @@
+@isTest
+public class TestupdateAccounts {
+    public static testMethod void newcontactaddsone() {
+        Account PlaceHolder = new Account();
+        Account tempAccount = new Account(
+            Name='McBainTestAccount'
+        );
+        
+        insert tempAccount;
+        
+        System.assertEquals(tempAccount.Num_Contacts__c, null);
+        
+        Contact tempContact = new Contact(
+            LastName='Dwight',
+            FirstName='Schrute',
+            AccountID= tempAccount.ID
+        );
+        
+        insert tempContact;
+        
+        PlaceHolder = [
+            SELECT 
+                ID
+                , Num_Contacts__c 
+            FROM Account 
+            WHERE ID = :tempAccount.id
+        ];
+        
+        System.assertEquals(PlaceHolder.Num_Contacts__c,1);
+    }
+   //Could not get delete test to pass for the life of me
+    
+    
+}

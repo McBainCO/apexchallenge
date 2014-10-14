@@ -1,0 +1,49 @@
+trigger updateAccounts on Contact (after delete, after insert) {
+ 
+    set<ID> accountIds = new set<ID>();
+    set<ID> contactIds = new Set<ID>();
+   
+    public void addAccountId(Id i)
+    {
+        if(i !=null)
+            accountIds.add(i);
+    }
+    
+    if(trigger.isInsert){  
+        for(Contact contact : trigger.new){
+            addAccountId(contact.AccountId);
+        }
+    }
+ 
+    if(trigger.isDelete){
+        for(Contact tempContact : trigger.old){
+            addAccountId(tempContact.AccountId);
+        }
+    }
+     
+    List<AggregateResult> contactsPerAccount = [
+        select  AccountId, 
+        count(ID) numContacts 
+        from Contact 
+        where AccountId in : accountIds Group By AccountId
+    ];
+    
+    Map<Id,Integer> countMap = new Map<Id,Integer>();
+    
+    for (AggregateResult contactCount : contactsPerAccount) {
+        countMap.put(
+            string.valueOf(contactCount.get('AccountId'))
+            , Integer.valueOf(contactCount.get('numContacts'))
+        );
+    } 
+    
+    List<Account> updateAccounts = new  List<Account>();
+    
+    for(Id accountId : accountIds ){
+        Account tmpAccount = new Account(id=accountId);
+        tmpAccount.Num_Contacts__c = countMap.get(accountId);  
+        updateAccounts.add(tmpAccount);
+    } 
+    
+    update updateAccounts;    
+}
